@@ -12,3 +12,6 @@ target_link_libraries(broadcast_test ATen)
 
 add_executable(wrapdim_test wrapdim_test.cpp)
 target_link_libraries(wrapdim_test ATen)
+
+add_executable(scalar_tensor_test scalar_tensor_test.cpp)
+target_link_libraries(scalar_tensor_test ATen)
