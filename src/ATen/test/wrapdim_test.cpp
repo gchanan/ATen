@@ -17,13 +17,16 @@ int main() {
     auto a = T.randn({2, 3, 4, 5});
     assert(a.unsqueeze(-5).equal(a.unsqueeze(0)));
     assert(a.unsqueeze(4).equal(a.unsqueeze(-1)));
-  }
 
-  // test case with empty tensor
-  {
-    auto a = T.randn(0);
+    // can unsqueeze scalar
+    auto b = T.randn(1);
+    b.get()->maybeScalar(true);
+    assert(b.unsqueeze(0).equal(b.unsqueeze(-1)));
+
+    // can't unsqueeze empty tensor
     try {
-      a.prod(0);
+      auto c = T.randn(0);
+      c.unsqueeze(0);
       assert(false);
     } catch (std::runtime_error &e) {}
   }
