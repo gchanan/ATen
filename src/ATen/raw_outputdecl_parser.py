@@ -1,5 +1,6 @@
 # finds raw declarations between [Declarations.yaml] and [/Declarations.yaml]
 
+
 def parse(filename):
     with open(filename, 'r') as file:
         declaration_lines = []
