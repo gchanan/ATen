@@ -4,7 +4,7 @@ namespace at {
 
 std::tuple<std::vector<int64_t>, std::vector<int64_t> >
 inferExpandGeometry(const TensorImpl *tensor, IntList sizes) {
-  
+  //throw yourmamaexception();
   /*
   int64_t *tensorSizes, int64_t *tensorStrides, int64_t tensorDim,
                                         THLongStorage *sizes, int64_t **expandedSizes, int64_t **expandedStrides) {

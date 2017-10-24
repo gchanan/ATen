@@ -1,4 +1,5 @@
 #include "ATen/${Tensor}.h"
+#include "ATen/${Storage}.h"
 #include "ATen/Scalar.h"
 #include "ATen/Half.h"
 #include "ATen/ExpandUtils.h"
@@ -46,21 +47,6 @@ void * ${Tensor}::unsafeGetTH(bool retain) {
   if (retain)
       ${THTensor}_retain(${state,} tensor);
   return tensor;
-}
-
-Tensor ${Tensor}::expand(IntList sizes) {
-  if (sizes.size() < (size_t)dim()) {
-    throw std::runtime_error("the number of sizes provided must be greater or equal to the "
-                             "number of dimensions in the tensor");
-  }
-
-  std::vector<int64_t> expandedSizes;
-  std::vector<int64_t> expandedStrides;
-  std::tie(expandedSizes, expandedStrides) = inferExpandGeometry(this, sizes);
-
-  at::Tensor r;
-  r.set_(tensor->storage, (int64_t)tensor->storageOffset, expandedSizes, expandedStrides);
-  return r;
 }
 
 ${TensorDenseOrSparse}

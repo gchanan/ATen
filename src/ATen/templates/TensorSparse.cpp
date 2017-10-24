@@ -8,3 +8,7 @@ Scalar ${Tensor}::localScalar() {
 void ${Tensor}::assign_(Scalar s) {
   runtime_error("NYI assign_() on sparse tensors.");
 }
+
+Tensor ${Tensor}::expand(IntList sizes) {
+  runtime_error("NYI expand(IntList sizes) on sparse tensors.");
+}
