@@ -159,8 +159,8 @@ CHECKED_CAST = {
     'THGenerator*':
         CodeTemplate(
             'check_generator<${Backend}Generator>(${arg_name}, &context->defaultGenerator(backend()))'),
-    'THSize*': CodeTemplate('THLongStorageView::make(${arg_name}, true)'),
-    'THStride*': CodeTemplate('THLongStorageView::make(${arg_name}, false, true)'),
+    'THSize*': CodeTemplate('THLongStorageView::makeFromSize(${arg_name})'),
+    'THStride*': CodeTemplate('THLongStorageView::makeFromStride(${arg_name}, ${noelem_to_empty})'),
     'real': CodeTemplate('${arg_name}.to${ScalarName}()'),
     'accreal': CodeTemplate('${arg_name}.to${AccScalarName}()'),
     'TensorList': CodeTemplate('tensor_list_checked_cast<${Tensor}, Tensor, '
@@ -194,7 +194,7 @@ CONSTANT_REPLACEMENTS = [
     ('THPDefaultGenerator->cdata',
      'dynamic_cast<${Generator}&>().generator'),
     ('__storage_size.get\\(\\)',
-     'THLongStorageView::make(static_cast<int64_t>(storage.size()))'),
+     'THLongStorageView::makeFromLength(static_cast<int64_t>(storage.size()))'),
     ('__last_dim', 'self.ndimension()-1'),
 ]
 
@@ -773,11 +773,20 @@ def create_derived(backend_type_env, declarations):
         # if there is a THSize* argument, then its dimensions are used to determine scalar.
         # otherwise, it is true if all the input tensors are scalars,
         scalar_check_is_from_size = False
+        scalar_check_is_from_option = False
         scalar_check = None
+        if ('scalar_check' in option):
+            scalar_check_opt = option.get('scalar_check')
+            if scalar_check_opt is not False:
+                scalar_check = '{}->isScalar()'.format(scalar_check_opt + '_')
+            else:
+                scalar_check = 'false'
+            scalar_check_is_from_option = True
+
         for arg in option['arguments']:
             if is_real_argument_to_wrapper(arg):
                 count += 1
-            if arg['type'] == 'THSize*':
+            if arg['type'] == 'THSize*' and not scalar_check_is_from_option:
                 scalar_check_is_from_size = True
                 scalar_check = '{}.size() == 0'.format(arg['name'])
             if arg['type'] == 'TensorList':
@@ -816,10 +825,12 @@ def create_derived(backend_type_env, declarations):
                     if 'default_init' in arg:
                         default_init.append(arg['default_init'])
 
+                    #print("seen_names['size'] ?", seen_names['size'])
                     check_cast = CHECKED_CAST[arg['type']].substitute(
                         env, arg_name=arg['name'], arg_pos=count,
                         null_okay=null_okay, default_init=default_init,
-                        size=arg.get('size'))
+                        size=arg.get('size'),
+                        noelem_to_empty='size.size() == 1 && size[0] == 0' if 'size' in seen_names else 'false')
                     body.append("auto {}_ = {};".format(
                         arg['name'], check_cast))
                 if drop_argument(arg, option) or replace_with_null(arg):
@@ -847,15 +858,23 @@ def create_derived(backend_type_env, declarations):
 
                 # isScalar() for all input tensors is and'd to form
                 # the test for whether the output is also a scalar
+                #print("arg for checking scalar", arg['name'], option['api_name'])
+                #if ('scalar_check' in option.get('scalar_check')):
+                #    scalar_check = 
+                    #print("scalar_check", option.get('scalar_check'))
                 if (not arg.get('output') and 'Tensor' in arg['type'] and
                         'TensorList' not in arg['type'] and
                         'THS' not in arg['type'] and
-                        not scalar_check_is_from_size):
+                        not scalar_check_is_from_size and
+                        not scalar_check_is_from_option):
+                        #and
+                        #not (arg['name'] == "self" and option['api_name'] == "resize_as_") and
+                        #not (arg['name'] == "self" and option['api_name'] == "set_")):
                     check = '{}->isScalar()'.format(arg['name'] + '_')
                     if nullable_argument(arg):
                         check = '(!{} || {})'.format(arg['name'] + '_', check)
                     scalar_check = (check if scalar_check is None
-                                    else scalar_check + ' && ' + check)
+                                    else scalar_check + ' && ' + check + ' && true')
 
         # cimpls, if it exists, contains the underlying C function names and
         # arguments. Otherwise use option
