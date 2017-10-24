@@ -11,3 +11,4 @@
 #include "ATen/Formatting.h"
 #include "ATen/TensorOperators.h"
 #include "ATen/TensorMethods.h"
+#include "ATen/ExpandUtils.h"

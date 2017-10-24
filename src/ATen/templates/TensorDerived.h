@@ -18,6 +18,7 @@ public:
   virtual IntList sizes() override;
   virtual IntList strides() override;
   virtual int64_t dim() override;
+  virtual Tensor expand(IntList sizes) override;
   virtual Scalar localScalar() override;
   virtual void assign_(Scalar s) override;
   virtual void * unsafeGetTH(bool retain) override;
