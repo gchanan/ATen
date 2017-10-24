@@ -18,6 +18,7 @@ struct TensorImpl {
   virtual IntList sizes() = 0;
   virtual IntList strides() = 0;
   virtual int64_t dim() = 0;
+  virtual Tensor expand(IntList sizes) = 0;
   virtual Scalar localScalar() = 0;
   virtual void assign_(Scalar s) = 0;
   virtual void * unsafeGetTH(bool retain) = 0;

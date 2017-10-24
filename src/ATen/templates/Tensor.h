@@ -122,6 +122,11 @@ struct Tensor {
   Tensor toBackend(Backend b) const {
     return toType(type().toBackend(b));
   }
+  Tensor expand(IntList size) const {
+    throw std::runtime_error("");
+    Tensor a;
+    return a;
+  }
 
   template<typename T>
   T * data() const;

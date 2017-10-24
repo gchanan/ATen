@@ -64,7 +64,9 @@ def process_types_and_backends(option):
 
 
 def exclude(declaration):
-    return 'only_register' in declaration or declaration.get('python_name') == 'ndimension'
+    return ('only_register' in declaration or declaration.get('python_name') == 'ndimension' or
+            declaration.get('name') == 'expand')
+    
 
 
 def add_variants(option):
