@@ -19,7 +19,8 @@ void ${Tensor}::assign_(Scalar s) {
 
 Tensor ${Tensor}::expand(IntList sizes) {
   if (sizes.size() < (size_t)dim()) {
-    throw std::runtime_error("the number of sizes provided must be greater or equal to the "
+    std::cerr << "number of sizes " << sizes.size() << " dim: " << (size_t)dim() << std::endl;
+    throw std::runtime_error("the number of sizes provided123 must be greater or equal to the "
                              "number of dimensions in the tensor");
   }
 
@@ -42,6 +43,7 @@ std::unique_ptr<Storage> CPUIntType::storageFromBlob(void * data, int64_t size, 
     //virtual Tensor tensor(Storage & storage, int64_t storageOffset, IntList size, IntList stride) const override;
 
   std::unique_ptr<Storage> storage(new ${Storage}(context, tensor->storage));
+  storage->retain();
   auto r = type().tensor(*storage, (int64_t)tensor->storageOffset, expandedSizes, expandedStrides);
   //auto r = tensor();
   //r.set_(tensor->storage, (int64_t)tensor->storageOffset, expandedSizes, expandedStrides);
