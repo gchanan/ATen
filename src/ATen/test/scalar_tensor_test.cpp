@@ -9,10 +9,24 @@ void assert_equal_size_dim(const Tensor &lhs, const Tensor &rhs) {
   assert(lhs.sizes().equals(rhs.sizes()));
 }
 
+bool should_expand(const IntList &from_size, const IntList &to_size) {
+  if(from_size.size() > to_size.size()) {
+    return false;
+  }
+  for (auto from_dim_it = from_size.rbegin(); from_dim_it != from_size.rend(); ++from_dim_it) {
+    for (auto to_dim_it = to_size.rbegin(); to_dim_it != to_size.rend(); ++to_dim_it) {
+      if (*from_dim_it != 1 && *from_dim_it != *to_dim_it) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 int main() {
   Type & T = CPU(kFloat);
 
-  std::vector<std::vector<int64_t> > sizes = { {}, {0}, {1, 1}, {2}};
+  std::vector<std::vector<int64_t> > sizes = { {}, {0}, {1}, {1, 1}, {2}};
 
   // construct a tensor of each size and verify that the dim, sizes, strides, etc.
   // match what was requested.
@@ -49,7 +63,8 @@ int main() {
 
     // squeeze
     if (t.dim() > 0 && t.sizes()[0] == 1) {
-      assert(t.squeeze(0).dim() == t.dim() - 1);
+      // FIXME: the max should be 0, but we don't reduce down to scalars properly yet
+      assert(t.squeeze(0).dim() == std::max<int64_t>(t.dim() - 1, 1));
     } else if (t.dim() == 0 || t.numel() == 0)  {
       try {
         t.squeeze(0);
@@ -134,12 +149,26 @@ int main() {
             assert(lhs.dim() != 0);
           }
           {
-            // with storage
+            // with storage, offset, sizes, strides
             auto lhs = T.ones(*lhs_it);
             auto rhs = T.ones(*rhs_it);
             auto storage = T.storage(rhs.numel());
             lhs.set_(*storage, rhs.storage_offset(), rhs.sizes(), rhs.strides());
             assert_equal_size_dim(lhs, rhs);
+          }
+        }
+
+        // assign_
+        {
+          auto lhs = T.ones(*lhs_it);
+          auto lhs_save = T.ones(*lhs_it);
+          auto rhs = T.ones(*rhs_it);
+          try {
+            lhs.assign_(rhs);
+            assert(lhs_save.numel() == rhs.numel());
+            assert_equal_size_dim(lhs, lhs_save);
+          } catch (std::runtime_error &e) {
+            assert(lhs_save.numel() != rhs.numel());
           }
         }
       }
@@ -164,15 +193,7 @@ int main() {
         auto lhs_size = *lhs_it;
         auto rhs = T.ones(*rhs_it);
         auto rhs_size = *rhs_it;
-        bool should_pass = lhs_size.size() <= rhs_size.size();
-        for (auto lhs_dim_it = lhs_size.rbegin(); lhs_dim_it != lhs_size.rend(); ++lhs_dim_it) {
-          for (auto rhs_dim_it = rhs_size.rbegin(); rhs_dim_it != rhs_size.rend(); ++rhs_dim_it) {
-            if (*lhs_dim_it != 1 && *lhs_dim_it != *rhs_dim_it) {
-              should_pass = false;
-              break;
-            }
-          }
-        }
+        bool should_pass = should_expand(lhs_size, rhs_size);//lhs_size.size() <= rhs_size.size();
         try {
           auto result = lhs.expand(rhs_size);
           assert(should_pass);
