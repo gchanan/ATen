@@ -95,6 +95,7 @@
   cname: copy
   cpu_half: True
   return: self
+  scalar_check: self
   arguments:
     - THTensor* self
     - THTensor* src
