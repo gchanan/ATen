@@ -201,6 +201,19 @@ int main() {
         } catch (std::runtime_error &e) {
           assert(!should_pass);
         }
+
+        // in-place functions (would be good if we can also do a non-broadcasting one, b/c
+        // broadcasting functions will always end up operating on tensors of same size)
+        {
+          bool should_pass_inplace = should_expand(rhs_size, lhs_size);
+          try {
+            lhs.add_(rhs);
+            assert(should_pass_inplace);
+            assert_equal_size_dim(lhs, T.ones(*lhs_it));
+          } catch (std::runtime_error &e) {
+            assert(!should_pass_inplace);
+          }
+        }
       }
     }
   }
