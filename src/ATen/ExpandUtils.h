@@ -5,8 +5,6 @@
 
 namespace at {
 
-Tensor expand(const Tensor &tensor, IntList size);
-
 inline std::tuple<Tensor> expand_inplace(const Tensor &tensor, const Tensor &to_expand) {
   if (tensor.sizes().equals(to_expand.sizes())) {
     return std::make_tuple(to_expand);
