@@ -856,20 +856,15 @@ def create_derived(backend_type_env, declarations):
                 else:
                     body += initializers
 
-                # isScalar() for all input tensors is and'd to form
+                # for out-of-place: isScalar() for all input tensors is and'd to form
                 # the test for whether the output is also a scalar
-                #print("arg for checking scalar", arg['name'], option['api_name'])
-                #if ('scalar_check' in option.get('scalar_check')):
-                #    scalar_check = 
-                    #print("scalar_check", option.get('scalar_check'))
+                # for in-place: isScalar() shouldn't change as a result of the operation
                 if (not arg.get('output') and 'Tensor' in arg['type'] and
                         'TensorList' not in arg['type'] and
                         'THS' not in arg['type'] and
                         not scalar_check_is_from_size and
-                        not scalar_check_is_from_option):
-                        #and
-                        #not (arg['name'] == "self" and option['api_name'] == "resize_as_") and
-                        #not (arg['name'] == "self" and option['api_name'] == "set_")):
+                        not scalar_check_is_from_option and
+                        not option['inplace']):
                     check = '{}->isScalar()'.format(arg['name'] + '_')
                     if nullable_argument(arg):
                         check = '(!{} || {})'.format(arg['name'] + '_', check)
