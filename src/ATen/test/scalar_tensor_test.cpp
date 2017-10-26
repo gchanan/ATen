@@ -206,8 +206,8 @@ int main() {
         }
 
         // in-place functions (would be good if we can also do a non-broadcasting one, b/c
-        // broadcasting functions will always end up operating on tensors of same size; assign_
-        // is the only one I could find).
+        // broadcasting functions will always end up operating on tensors of same size;
+        // is there an example of this outside of assign_ ?)
         {
           bool should_pass_inplace = should_expand(rhs_size, lhs_size);
           try {
