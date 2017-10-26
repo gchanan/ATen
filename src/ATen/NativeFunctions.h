@@ -63,7 +63,7 @@ type_method_definition_dispatch: at::native::is_same_size
 [/NativeFunction]
 */
 static inline bool is_same_size(const Tensor &self, const Tensor &other) {
-  return self.dim() == other.dim() && self.sizes().equals(other.sizes());
+  return self.sizes().equals(other.sizes());
 }
 
 /*
