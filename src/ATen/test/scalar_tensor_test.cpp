@@ -56,6 +56,7 @@ int main() {
       }
     } else {
       try {
+        // can't unsqueeze empty tensor
         t.unsqueeze(0);
         assert (false);
       } catch (std::runtime_error &e) {}
@@ -93,6 +94,7 @@ int main() {
       } catch (std::runtime_error &e) {}
     }
 
+    // simple indexing
     if (t.dim() > 0 && t.numel() != 0) {
       assert(t[0].dim() == std::max<int64_t>(t.dim() - 1, 0));
     } else if (t.dim() == 0) {
@@ -166,6 +168,7 @@ int main() {
           try {
             lhs.assign_(rhs);
             assert(lhs_save.numel() == rhs.numel());
+            // ensure didn't change shape
             assert_equal_size_dim(lhs, lhs_save);
           } catch (std::runtime_error &e) {
             assert(lhs_save.numel() != rhs.numel());
@@ -193,7 +196,7 @@ int main() {
         auto lhs_size = *lhs_it;
         auto rhs = T.ones(*rhs_it);
         auto rhs_size = *rhs_it;
-        bool should_pass = should_expand(lhs_size, rhs_size);//lhs_size.size() <= rhs_size.size();
+        bool should_pass = should_expand(lhs_size, rhs_size);
         try {
           auto result = lhs.expand(rhs_size);
           assert(should_pass);
@@ -203,7 +206,8 @@ int main() {
         }
 
         // in-place functions (would be good if we can also do a non-broadcasting one, b/c
-        // broadcasting functions will always end up operating on tensors of same size)
+        // broadcasting functions will always end up operating on tensors of same size; assign_
+        // is the only one I could find).
         {
           bool should_pass_inplace = should_expand(rhs_size, lhs_size);
           try {
