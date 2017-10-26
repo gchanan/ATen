@@ -28,9 +28,9 @@ int main() {
 
   std::vector<std::vector<int64_t> > sizes = { {}, {0}, {1}, {1, 1}, {2}};
 
-  // construct a tensor of each size and verify that the dim, sizes, strides, etc.
-  // match what was requested.
+  // single-tensor/size tests
   for (auto s = sizes.begin(); s != sizes.end(); ++s) {
+    // verify that the dim, sizes, strides, etc match what was requested.
     auto t = T.ones(*s);
     assert(t.dim() == s->size());
     assert(t.ndimension() == s->size());
