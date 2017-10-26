@@ -825,11 +825,12 @@ def create_derived(backend_type_env, declarations):
                     if 'default_init' in arg:
                         default_init.append(arg['default_init'])
 
+                    no_elem_to_empty = 'is_noelem_tensor_size(size)' if 'size' in seen_names else 'false'
                     check_cast = CHECKED_CAST[arg['type']].substitute(
                         env, arg_name=arg['name'], arg_pos=count,
                         null_okay=null_okay, default_init=default_init,
                         size=arg.get('size'),
-                        noelem_to_empty='size.size() == 1 && size[0] == 0' if 'size' in seen_names else 'false')
+                        noelem_to_empty=noelem_to_empty)
                     body.append("auto {}_ = {};".format(
                         arg['name'], check_cast))
                 if drop_argument(arg, option) or replace_with_null(arg):

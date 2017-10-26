@@ -4,6 +4,10 @@
 
 namespace at {
 
+static inline is_noelem_tensor_size(ArrayRef<int64_t> size) {
+  return size.size() == 1 && size[0] == 0;
+}
+
 // make a fake storage out of a size, pointer pair...
 // used as an argument where THSize and THStride are passed into TH
 class THLongStorageView {
@@ -38,7 +42,7 @@ private:
       one = 1;
       storage.data = &one;
       storage.size = 1;
-    } else if (noelem_to_empty && ref.size() == 1 && ref[0] == 0) {
+    } else if (noelem_to_empty && is_noelem_tensor_size(ref)) {
       storage.data = (int64_t*)(ref.data());
       storage.size = 0;
     }
