@@ -31,6 +31,10 @@ std::tuple<std::vector<int64_t>, std::vector<int64_t> >
 inferExpandGeometry(const Tensor &tensor, IntList sizes) {
   int64_t ndim = sizes.size();
 
+  if (tensor.dim() == 0) {
+    std::vector<int64_t> expandedStrides(ndim, 0);
+    return std::tuple<std::vector<int64_t>, std::vector<int64_t>>(sizes.vec(), expandedStrides);
+  }
   std::vector<int64_t> expandedSizes(ndim);
   std::vector<int64_t> expandedStrides(ndim);
 
@@ -40,7 +44,7 @@ inferExpandGeometry(const Tensor &tensor, IntList sizes) {
     int64_t dim = tensor.dim() - 1 - offset;
     int64_t size = (dim >= 0) ? tensor.sizes()[dim] : 1;
     int64_t stride = (dim >= 0) ?
-        tensor.strides()[dim] : expandedSizes[i + 1] * expandedStrides[i+1];
+        tensor.strides()[dim] : expandedSizes[i + 1] * expandedStrides[i + 1];
     int64_t targetSize = sizes[i];
     if (targetSize == -1) {
       if (dim < 0) {
