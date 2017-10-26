@@ -777,10 +777,10 @@ def create_derived(backend_type_env, declarations):
         scalar_check = None
         scalar_check_opt = option.get('scalar_check')
         if scalar_check_opt is not None:
-            if scalar_check_opt is not False:
-                scalar_check = '{}->isScalar()'.format(scalar_check_opt + '_')
+            if isinstance(scalar_check_opt, bool):
+                scalar_check = str(scalar_check_opt).lower()
             else:
-                scalar_check = 'false'
+                scalar_check = scalar_check_opt
             scalar_check_is_from_option = True
 
         for arg in option['arguments']:

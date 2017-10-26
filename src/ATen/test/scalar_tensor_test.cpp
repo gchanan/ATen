@@ -79,8 +79,7 @@ int main() {
 
     // reduce
     if (t.dim() > 0 && t.numel() != 0) {
-      // FIXME: the max should be 0, but we don't reduce down to scalars properly yet
-      assert(t.sum(0).dim() == std::max<int64_t>(t.dim() - 1, 1));
+      assert(t.sum(0).dim() == t.dim() - 1);
     } else if (t.dim() == 0) {
       try {
         t.sum(0);
