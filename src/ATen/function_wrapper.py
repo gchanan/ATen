@@ -775,8 +775,8 @@ def create_derived(backend_type_env, declarations):
         scalar_check_is_from_size = False
         scalar_check_is_from_option = False
         scalar_check = None
-        if ('scalar_check' in option):
-            scalar_check_opt = option.get('scalar_check')
+        scalar_check_opt = option.get('scalar_check')
+        if (scalar_check_opt is not None:
             if scalar_check_opt is not False:
                 scalar_check = '{}->isScalar()'.format(scalar_check_opt + '_')
             else:
@@ -825,7 +825,6 @@ def create_derived(backend_type_env, declarations):
                     if 'default_init' in arg:
                         default_init.append(arg['default_init'])
 
-                    #print("seen_names['size'] ?", seen_names['size'])
                     check_cast = CHECKED_CAST[arg['type']].substitute(
                         env, arg_name=arg['name'], arg_pos=count,
                         null_okay=null_okay, default_init=default_init,
@@ -869,7 +868,7 @@ def create_derived(backend_type_env, declarations):
                     if nullable_argument(arg):
                         check = '(!{} || {})'.format(arg['name'] + '_', check)
                     scalar_check = (check if scalar_check is None
-                                    else scalar_check + ' && ' + check + ' && true')
+                                    else scalar_check + ' && ' + check)
 
         # cimpls, if it exists, contains the underlying C function names and
         # arguments. Otherwise use option
