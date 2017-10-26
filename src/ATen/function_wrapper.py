@@ -776,7 +776,7 @@ def create_derived(backend_type_env, declarations):
         scalar_check_is_from_option = False
         scalar_check = None
         scalar_check_opt = option.get('scalar_check')
-        if (scalar_check_opt is not None:
+        if scalar_check_opt is not None:
             if scalar_check_opt is not False:
                 scalar_check = '{}->isScalar()'.format(scalar_check_opt + '_')
             else:
@@ -825,7 +825,7 @@ def create_derived(backend_type_env, declarations):
                     if 'default_init' in arg:
                         default_init.append(arg['default_init'])
 
-                    no_elem_to_empty = 'is_noelem_tensor_size(size)' if 'size' in seen_names else 'false'
+                    noelem_to_empty = 'is_noelem_tensor_size(size)' if 'size' in seen_names else 'false'
                     check_cast = CHECKED_CAST[arg['type']].substitute(
                         env, arg_name=arg['name'], arg_pos=count,
                         null_okay=null_okay, default_init=default_init,

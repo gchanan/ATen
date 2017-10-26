@@ -4,7 +4,7 @@
 
 namespace at {
 
-static inline is_noelem_tensor_size(ArrayRef<int64_t> size) {
+static inline bool is_noelem_tensor_size(ArrayRef<int64_t> size) {
   return size.size() == 1 && size[0] == 0;
 }
 

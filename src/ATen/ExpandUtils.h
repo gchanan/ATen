@@ -5,7 +5,7 @@
 
 namespace at {
 
-std::vector<int64_t> infer_size2(IntList a, IntList b);
+std::vector<int64_t> infer_size(IntList a, IntList b);
 std::tuple<std::vector<int64_t>, std::vector<int64_t> > inferExpandGeometry(const Tensor &tensor, IntList sizes);
 
 inline std::tuple<Tensor> expand_inplace(const Tensor &tensor, const Tensor &to_expand) {
@@ -29,7 +29,7 @@ inline std::tuple<Tensor, Tensor> expand_outplace(const Tensor &to_expand1, cons
     return std::make_tuple(to_expand1, to_expand2);
   }
 
-  auto expanded_size = infer_size2(to_expand1.sizes(), to_expand2.sizes());
+  auto expanded_size = infer_size(to_expand1.sizes(), to_expand2.sizes());
   return std::make_tuple(to_expand1.expand(expanded_size), to_expand2.expand(expanded_size));
 }
 
@@ -40,8 +40,8 @@ inline std::tuple<Tensor, Tensor, Tensor> expand_outplace(const Tensor &to_expan
     return std::make_tuple(to_expand1, to_expand2, to_expand3);
   }
 
-  auto expanded_size12 = infer_size2(to_expand1.sizes(), to_expand2.sizes());
-  auto expanded_size = infer_size2(expanded_size12, to_expand3.sizes());
+  auto expanded_size12 = infer_size(to_expand1.sizes(), to_expand2.sizes());
+  auto expanded_size = infer_size(expanded_size12, to_expand3.sizes());
   return std::make_tuple(to_expand1.expand(expanded_size), to_expand2.expand(expanded_size), to_expand3.expand(expanded_size));
 }
 

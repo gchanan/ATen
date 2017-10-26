@@ -2,7 +2,7 @@
 
 namespace at {
 
-std::vector<int64_t> infer_size2(IntList a, IntList b) {
+std::vector<int64_t> infer_size(IntList a, IntList b) {
   auto dimsA = a.size();
   auto dimsB = b.size();
   ptrdiff_t ndim = dimsA > dimsB ? dimsA : dimsB;
