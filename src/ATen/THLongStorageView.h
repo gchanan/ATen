@@ -8,11 +8,6 @@ namespace at {
 // used as an argument where THSize and THStride are passed into TH
 class THLongStorageView {
 public:
-  /*static THLongStorageView make(ArrayRef<int64_t> ref, bool zero_dim_to_one = false, bool zero_dim_to_null = false,
-                                bool noelem_to_empty = false) {
-    assert(!(zero_dim_to_one && zero_dim_to_null));
-    return THLongStorageView(ref, zero_dim_to_one, zero_dim_to_null, noelem_to_empty);
-  }*/
   static THLongStorageView makeFromSize(ArrayRef<int64_t> ref) {
     return THLongStorageView(ref, true, false, false);
   }
@@ -22,7 +17,6 @@ public:
     return THLongStorageView(ref, false, true, noelem_to_empty);
   }
   static THLongStorageView makeFromLength(ArrayRef<int64_t> ref) {
-    //std::cerr << "created from length" /*<< val*/ << std::endl;
     return THLongStorageView(ref, false, false, false);
   }
   operator THLongStorage*() {
