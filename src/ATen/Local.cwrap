@@ -126,6 +126,7 @@
     - THStride* stride
   aten_custom_call: |
     ${THTensor}_setStorage(${state,}result_->tensor, self_->tensor->storage, self_->tensor->storageOffset, size_, stride_);
+    result_->maybeScalar(size.size() == 0);
 ]]
 
 [[
