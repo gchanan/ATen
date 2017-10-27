@@ -77,9 +77,27 @@ int main() {
       assert(t.squeeze(0).dim() == t.dim());
     }
 
-    // reduce
+    // reduce (with 1 return argument)
     if (t.dim() > 0 && t.numel() != 0) {
       assert(t.sum(0).dim() == t.dim() - 1);
+    } else if (t.dim() == 0) {
+      try {
+        t.sum(0);
+        assert(false);
+      } catch (std::runtime_error &e) {}
+    } else {
+      // FIXME: you should be able to reduce over size {0}
+      try {
+        t.sum(0);
+        assert(false);
+      } catch (std::runtime_error &e) {}
+    }
+
+    // reduce (with 2 return arguments)
+    if (t.dim() > 0 && t.numel() != 0) {
+      auto ret = t.min(0);
+      assert(std::get<0>(ret).dim() == t.dim() - 1);
+      assert(std::get<1>(ret).dim() == t.dim() - 1);
     } else if (t.dim() == 0) {
       try {
         t.sum(0);
