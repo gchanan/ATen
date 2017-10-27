@@ -123,6 +123,35 @@ static inline Tensor expand(const Tensor &self, IntList sizes) {
   return self.as_strided(expandedSizes, expandedStrides);
 }
 
+static inline std::tuple<std::vector<int64_t>, std::vector<int64_t> >
+inferSqueezeGeometry(const Tensor &tensor) {
+  std::vector<int64_t> sizes;
+  std::vector<int64_t> strides;
+
+  for(int d = 0; d < tensor.dim(); d++) {
+    if(tensor.sizes()[d] != 1) {
+      sizes.push_back(tensor.sizes()[d]);
+      strides.push_back(tensor.strides()[d]);
+    }
+  }
+
+  return std::make_tuple(sizes, strides);
+}
+
+static inline std::tuple<std::vector<int64_t>, std::vector<int64_t> >
+inferSqueezeGeometry(const Tensor &tensor, int dim) {
+  std::vector<int64_t> sizes;
+  std::vector<int64_t> strides;
+
+  for(int d = 0; d < tensor.dim(); d++) {
+    if(d != dim || tensor.sizes()[dim] != 1) {
+      sizes.push_back(tensor.sizes()[d]);
+      strides.push_back(tensor.strides()[d]);
+    }
+  }
+  return std::make_tuple(sizes, strides);
+}
+
 /*
 [NativeFunction]
 name: squeeze
@@ -134,19 +163,8 @@ type_method_definition_dispatch: at::native::squeeze
 [/NativeFunction]
 */
 static inline Tensor squeeze(const Tensor & self) {
-  std::vector<int64_t> sizes;
-  std::vector<int64_t> strides;
-
-  for(int d = 0; d < self.dim(); d++)
-  {
-    if(self.sizes()[d] != 1)
-    {
-      sizes.push_back(self.sizes()[d]);
-      strides.push_back(self.strides()[d]);
-    }
-  }
-
-  return self.as_strided(sizes, strides);
+  auto g = inferSqueezeGeometry(self);
+  return self.as_strided(std::get<0>(g), std::get<1>(g));
 }
 
 /*
@@ -166,19 +184,44 @@ static inline Tensor squeeze(const Tensor & self, int64_t dim) {
   if (self.sizes()[dim] != 1) {
     return self.as_strided(self.sizes().vec(), self.strides().vec());
   }
-  std::vector<int64_t> sizes;
-  std::vector<int64_t> strides;
+  auto g = inferSqueezeGeometry(self, dim);
+  return self.as_strided(std::get<0>(g), std::get<1>(g));
+}
 
-  for(int d = 0; d < self.dim(); d++)
-  {
-    if(d != dim)
-    {
-      sizes.push_back(self.sizes()[d]);
-      strides.push_back(self.strides()[d]);
-    }
+/*
+[NativeFunction]
+name: squeeze_
+arg: Tensor self
+return: Tensor
+variants: method, function
+type_method_definition_level: base
+type_method_definition_dispatch: at::native::squeeze_
+[/NativeFunction]
+*/
+static inline Tensor squeeze_(Tensor self) {
+  auto g = inferSqueezeGeometry(self);
+  return self.as_strided_(std::get<0>(g), std::get<1>(g));
+}
+
+/*
+[NativeFunction]
+name: squeeze_
+arg: Tensor self
+arg: int64_t dim
+return: Tensor
+variants: method, function
+type_method_definition_level: base
+type_method_definition_dispatch: at::native::squeeze_
+[/NativeFunction]
+*/
+static inline Tensor squeeze_(Tensor self, int64_t dim) {
+  dim = maybe_wrap_dim(dim, self.dim());
+
+  if (self.sizes()[dim] != 1) {
+    return self.as_strided_(self.sizes().vec(), self.strides().vec());
   }
-
-  return self.as_strided(sizes, strides);
+  auto g = inferSqueezeGeometry(self, dim);
+  return self.as_strided_(std::get<0>(g), std::get<1>(g));
 }
 
 }
