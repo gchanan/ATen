@@ -123,5 +123,63 @@ static inline Tensor expand(const Tensor &self, IntList sizes) {
   return self.as_strided(expandedSizes, expandedStrides);
 }
 
+/*
+[NativeFunction]
+name: squeeze
+arg: Tensor self
+return: Tensor
+variants: method, function
+type_method_definition_level: base
+type_method_definition_dispatch: at::native::squeeze
+[/NativeFunction]
+*/
+static inline Tensor squeeze(const Tensor & self) {
+  std::vector<int64_t> sizes;
+  std::vector<int64_t> strides;
+
+  for(int d = 0; d < self.dim(); d++)
+  {
+    if(self.sizes()[d] != 1)
+    {
+      sizes.push_back(self.sizes()[d]);
+      strides.push_back(self.strides()[d]);
+    }
+  }
+
+  return self.as_strided(sizes, strides);
+}
+
+/*
+[NativeFunction]
+name: squeeze
+arg: Tensor self
+arg: int64_t dim
+return: Tensor
+variants: method, function
+type_method_definition_level: base
+type_method_definition_dispatch: at::native::squeeze
+[/NativeFunction]
+*/
+static inline Tensor squeeze(const Tensor & self, int64_t dim) {
+  dim = maybe_wrap_dim(dim, self.dim());
+
+  if (self.sizes()[dim] != 1) {
+    return self.as_strided(self.sizes().vec(), self.strides().vec());
+  }
+  std::vector<int64_t> sizes;
+  std::vector<int64_t> strides;
+
+  for(int d = 0; d < self.dim(); d++)
+  {
+    if(d != dim)
+    {
+      sizes.push_back(self.sizes()[d]);
+      strides.push_back(self.strides()[d]);
+    }
+  }
+
+  return self.as_strided(sizes, strides);
+}
+
 }
 }

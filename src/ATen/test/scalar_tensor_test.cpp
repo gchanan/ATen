@@ -62,11 +62,10 @@ int main() {
       } catch (std::runtime_error &e) {}
     }
 
-    // squeeze
+    // squeeze (with dimension argument)
     if (t.dim() > 0 && t.sizes()[0] == 1) {
-      // FIXME: the max should be 0, but we don't reduce down to scalars properly yet
-      assert(t.squeeze(0).dim() == std::max<int64_t>(t.dim() - 1, 1));
-    } else if (t.dim() == 0 || t.numel() == 0)  {
+      assert(t.squeeze(0).dim() == t.dim() - 1);
+    } else if (t.dim() == 0) {
       try {
         t.squeeze(0);
         assert(false);
@@ -77,7 +76,20 @@ int main() {
       assert(t.squeeze(0).dim() == t.dim());
     }
 
-    // reduce (with 1 return argument)
+    // squeeze (with no dimension argument)
+    {
+      std::vector<int64_t> size_without_ones;
+      for (auto size : *s) {
+        if (size != 1) {
+          size_without_ones.push_back(size);
+        }
+      }
+      auto result = t.squeeze();
+      assert(result.dim() == size_without_ones.size());
+      assert(result.sizes().equals(size_without_ones));
+    }
+
+    // reduce (with dimension argument and with 1 return argument)
     if (t.dim() > 0 && t.numel() != 0) {
       assert(t.sum(0).dim() == t.dim() - 1);
     } else if (t.dim() == 0) {
@@ -93,7 +105,7 @@ int main() {
       } catch (std::runtime_error &e) {}
     }
 
-    // reduce (with 2 return arguments)
+    // reduce (with dimension argument and with 2 return arguments)
     if (t.dim() > 0 && t.numel() != 0) {
       auto ret = t.min(0);
       assert(std::get<0>(ret).dim() == t.dim() - 1);

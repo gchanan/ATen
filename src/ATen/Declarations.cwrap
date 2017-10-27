@@ -331,26 +331,6 @@
     - CONSTANT 1
 ]]
 [[
-  name: squeeze
-  cpu_half: True
-  variants:
-    - method
-    - function
-  return: argument 0
-  options:
-    - arguments:
-        - arg: THTensor* result
-          output: True
-        - THTensor* self
-    - cname: squeeze1d
-      arguments:
-        - arg: THTensor* result
-          output: True
-        - THTensor* self
-        - arg: long dim
-          wrap_dim: self
-]]
-[[
   name: squeeze_
   cpu_half: True
   return: self
