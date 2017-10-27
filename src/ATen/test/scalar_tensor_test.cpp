@@ -48,18 +48,28 @@ int main() {
 
     // unsqueeze
     if (t.numel() != 0) {
-      if (t.dim() > 0) {
-        assert(t.unsqueeze(0).dim() == t.dim() + 1);
-      } else {
-        // FIXME: should be able to remove this if/else, unsqueezing a scalar should give 1-dimension
-        assert(t.unsqueeze(0).dim() == t.dim() + 2);
-      }
+      assert(t.unsqueeze(0).dim() == t.dim() + 1);
     } else {
       try {
         // can't unsqueeze empty tensor
         t.unsqueeze(0);
         assert (false);
       } catch (std::runtime_error &e) {}
+    }
+
+    // unsqueeze_
+    {
+      auto t2 = T.ones(*s);
+      if (t2.numel() != 0) {
+        auto r = t2.unsqueeze_(0);
+        assert(r.dim() == t.dim() + 1);
+      } else {
+        try {
+          // can't unsqueeze empty tensor
+          t2.unsqueeze_(0);
+          assert (false);
+        } catch (std::runtime_error &e) {}
+      }
     }
 
     // squeeze (with dimension argument)

@@ -331,34 +331,6 @@
     - CONSTANT 1
 ]]
 [[
-  name: unsqueeze
-  variants:
-    - method
-    - function
-  cpu_half: True
-  auto_gpu: False
-  return: argument 0
-  cname: unsqueeze1d
-  arguments:
-    - arg: THTensor* result
-      output: True
-    - THTensor* self
-    - arg: long dim
-      wrap_dim: self+1
-]]
-[[
-  name: unsqueeze_
-  cpu_half: True
-  auto_gpu: False
-  return: self
-  cname: unsqueeze1d
-  arguments:
-    - THTensor* self
-    - THTensor* self
-    - arg: long dim
-      wrap_dim: self+1
-]]
-[[
   name: nonzero
   variants:
     - method

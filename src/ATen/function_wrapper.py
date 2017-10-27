@@ -792,20 +792,15 @@ def create_derived(backend_type_env, declarations):
             if arg['type'] == 'TensorList':
                 seen_tensorlists.add(arg['name'])
 
-            wrap_dim_arg = arg.get('wrap_dim', None)
-            if wrap_dim_arg is not None:
-                # wrap_dim specification can have (add) expressions, e.g. self+1
-                wrap_dim_params = wrap_dim_arg.split("+")
-
+            wrap_dim_target = arg.get('wrap_dim', None)
+            if wrap_dim_target is not None:
                 # for Tensors, "name_" is the TensorImpl, but for TensorLists, it is an
                 # std::vector of TH*s.  Since TH*s have different dimension rules, we used
                 # "name" instead, but keep "name_" for tensor to avoid an extra function call.
-                if wrap_dim_params[0] not in seen_tensorlists:
-                    wrap_dim_params[0] = wrap_dim_params[0] + "_"
-                wrap_dim_target = wrap_dim_params[0]
-                wrap_dim_toadd = 0 if len(wrap_dim_params) == 1 else wrap_dim_params[1]
-                body.append("{} = maybe_wrap_dim({}, {}, {});"
-                            .format(arg['name'], arg['name'], wrap_dim_target, wrap_dim_toadd))
+                if wrap_dim_target not in seen_tensorlists:
+                    wrap_dim_target = wrap_dim_target + "_"
+                body.append("{} = maybe_wrap_dim({}, {});"
+                            .format(arg['name'], arg['name'], wrap_dim_target))
 
             # only generated checked casts the first time we see it
             if arg['name'] not in seen_names and requires_checked_cast(arg):
