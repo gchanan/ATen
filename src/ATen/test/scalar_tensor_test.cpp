@@ -85,8 +85,37 @@ int main() {
         }
       }
       auto result = t.squeeze();
-      assert(result.dim() == size_without_ones.size());
-      assert(result.sizes().equals(size_without_ones));
+      assert_equal_size_dim(result, T.ones(size_without_ones));
+    }
+
+    {
+      // squeeze_ (with dimension argument)
+      auto t2 = T.ones(*s);
+      if (t2.dim() > 0 && t2.sizes()[0] == 1) {
+        assert(t2.squeeze_(0).dim() == t.dim() - 1);
+      } else if (t2.dim() == 0) {
+        try {
+          t2.squeeze_(0);
+          assert(false);
+        } catch (std::runtime_error &e) {}
+      } else {
+        // In PyTorch, it is a no-op to try to squeeze a dimension that has size != 1;
+        // in NumPy this is an error.
+        assert(t2.squeeze_(0).dim() == t.dim());
+      }
+    }
+
+    // squeeze_ (with no dimension argument)
+    {
+      auto t2 = T.ones(*s);
+      std::vector<int64_t> size_without_ones;
+      for (auto size : *s) {
+        if (size != 1) {
+          size_without_ones.push_back(size);
+        }
+      }
+      auto r = t2.squeeze_();
+      assert_equal_size_dim(t2, T.ones(size_without_ones));
     }
 
     // reduce (with dimension argument and with 1 return argument)
