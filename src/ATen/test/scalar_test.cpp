@@ -81,7 +81,7 @@ int main() {
   auto t = CPU(Float).ones({4,4});
 
   auto wha2 = CPU(Float).zeros({4,4}).add(t).sum();
-  cout << wha2.toDouble() << " <-ndim\n";
+  cout << Scalar(wha2).toDouble() << " <-ndim\n";
 
   cout << t.sizes() << " " << t.strides() << "\n";
 

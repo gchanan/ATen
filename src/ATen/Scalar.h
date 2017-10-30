@@ -21,7 +21,7 @@ class AT_API Scalar {
 public:
   Scalar() : Scalar(int64_t(0)) {}
 
-  explicit Scalar(const detail::TensorBase & t)
+  Scalar(const detail::TensorBase & t)
   : tag(Tag::HAS_t), t(t) {
     AT_ASSERT(t.pImpl, "Attempting to create a Scalar from an undefined tensor");
     AT_ASSERT(t.dim() == 0, "Attempting to create a Scalar from a %d dim tensor", t.dim());
