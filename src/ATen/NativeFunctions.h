@@ -3,7 +3,11 @@
 #include "ATen/ATen.h"
 #include "ATen/WrapDimUtils.h"
 #include "ATen/ExpandUtils.h"
+#include <functional>
+#include <numeric>
+#include <sstream>
 #include <vector>
+
 
 namespace at {
 namespace native {
@@ -297,6 +301,127 @@ static inline Tensor stack(TensorList list, int64_t dim=0) {
     inputs[i] = list[i].unsqueeze(dim);
   }
   return at::cat(inputs, dim);
+}
+
+
+static inline Tensor maybeSqueeze(const Tensor & tensor, int64_t dim_tensor1, int64_t dim_tensor2) {
+  if (dim_tensor1 == 1) {
+    return tensor.squeeze(-2);
+  } else if (dim_tensor2 == 1) {
+    return tensor.squeeze(-1);
+  } else {
+    return tensor;
+  }
+}
+
+/*
+Matrix product of two Tensors.
+The behavior depends on the dimensionality of the Tensors as follows:
+- If both Tensors are 1-dimensional, the dot product (scalar) is returned.
+- If both arguments are 2-dimensional, the matrix-matrix product is returned.
+- If the first argument is 1-dimensional and the second argument is 2-dimensional,
+  a 1 is prepended to its dimension for the purpose of the matrix multiply.
+  After the matrix multiply, the prepended dimension is removed.
+- If the first argument is 2-dimensional and the second argument is 1-dimensional,
+  the matrix-vector product is returned.
+- If both arguments are at least 1-dimensional and at least one argument is
+  N-dimensional (where N > 2), then a batched matrix multiply is returned.  If the first
+  argument is 1-dimensional, a 1 is prepended to its dimension for the purpose of the
+  batched matrix multiply and removed after.  If the second argument is 1-dimensional, a
+  1 is appended to its dimension for the purpose of the batched matrix multiple and removed after.
+  The non-matrix (i.e. batch) dimensions are broadcasted (and thus
+  must be broadcastable).  For example, if tensor1 is a (j x 1 x n x m) Tensor
+  and tensor2 is a (k x m x p) Tensor, the returned tensor will be an (j x k x n x p) Tensor.
+
+[NativeFunction]
+name: matmul
+arg: Tensor tensor1
+arg: Tensor tensor2
+return: Tensor
+variants: method, function
+type_method_definition_level: base
+type_method_definition_dispatch: at::native::matmul
+[/NativeFunction]
+*/
+static inline Tensor matmul(const Tensor & tensor1, const Tensor & tensor2) {
+  auto dim_tensor1 = tensor1.dim();
+  auto dim_tensor2 = tensor2.dim();
+
+  if (dim_tensor1 == 1 && dim_tensor2 == 1) {
+    return tensor1.dot(tensor2);
+  } else if (dim_tensor1 == 2 && dim_tensor2 == 1) {
+    return tensor1.mv(tensor2);
+  } else if (dim_tensor1 == 1 && dim_tensor2 == 2) {
+    return tensor1.unsqueeze(0).mm(tensor2).squeeze_(0);
+  } else if (dim_tensor1 == 2 && dim_tensor2 == 2) {
+    return tensor1.mm(tensor2);
+  } else if (dim_tensor1 >= 3 && (dim_tensor2 == 1 || dim_tensor2 == 2)) {
+    // optimization: use mm instead of bmm by folding tensor1's batch into
+    // its leading matrix dimension.
+
+    Tensor t2 = dim_tensor2 == 1 ? tensor2.unsqueeze(-1) : tensor2;
+    auto size1 = tensor1.sizes();
+    auto size2 = t2.sizes();
+    std::vector<int64_t> output_size;
+    output_size.insert(output_size.end(), size1.begin(), size1.end() - 1);
+    output_size.insert(output_size.end(), size2.end() - 1, size2.end());
+
+    // fold the batch into the first dimension
+    Tensor t1 = tensor1.contiguous().view({-1, size1[size1.size() - 1]});
+
+    auto output = t1.mm(t2).view(output_size);
+    if (dim_tensor2 == 1) {
+      output = output.squeeze(-1);
+    }
+    return output;
+  } else if ((dim_tensor1 >= 1 && dim_tensor2 >= 1) && (dim_tensor1 >= 3 || dim_tensor2 >= 3)) {
+    // ensure each tensor size is at least 3-dimensional
+    std::vector<int64_t> tensor1_exp_size(std::max<int64_t>(3 - tensor1.dim(), 0), 1);
+    tensor1_exp_size.insert(tensor1_exp_size.end(), tensor1.sizes().begin(), tensor1.sizes().end());
+
+    // rhs needs to be a separate case since we can't freely expand 1s on the rhs, but can on lhs
+    Tensor t2 = dim_tensor2 == 1 ? tensor2.unsqueeze(1) : tensor2;
+    std::vector<int64_t> tensor2_exp_size(std::max<int64_t>(3 - tensor2.dim(), 0), 1);
+    tensor2_exp_size.insert(tensor2_exp_size.end(), tensor2.sizes().begin(), tensor2.sizes().end());
+
+    // expand the batch portion (i.e. cut off matrix dimensions and expand rest)
+    IntList batch_tensor1(tensor1_exp_size.data(), tensor1_exp_size.size() - 2);
+    IntList batch_tensor2(tensor2_exp_size.data(), tensor2_exp_size.size() - 2);
+    std::vector<int64_t> expand_batch_portion = infer_size(batch_tensor1, batch_tensor2);
+
+    std::vector<int64_t> tensor1_expand_size(expand_batch_portion);
+    tensor1_expand_size.insert(tensor1_expand_size.end(), tensor1_exp_size.end() - 2, tensor1_exp_size.end());
+
+    std::vector<int64_t> tensor2_expand_size(expand_batch_portion);
+    tensor2_expand_size.insert(tensor2_expand_size.end(), tensor2_exp_size.end() - 2, tensor2_exp_size.end());
+
+    int expand_batch_product = std::accumulate(expand_batch_portion.begin(), expand_batch_portion.end(),
+                                               1, std::multiplies<int64_t>());
+
+    std::vector<int64_t> tensor1_bmm_view(1, expand_batch_product);
+    tensor1_bmm_view.insert(tensor1_bmm_view.end(), tensor1_exp_size.end() - 2, tensor1_exp_size.end());
+    std::vector<int64_t> tensor2_bmm_view(1, expand_batch_product);
+    tensor2_bmm_view.insert(tensor2_bmm_view.end(), tensor2_exp_size.end() - 2, tensor2_exp_size.end());
+
+    // flatten expanded batches
+    Tensor tensor1_expanded = tensor1.expand(tensor1_expand_size).contiguous().view(tensor1_bmm_view);
+    Tensor tensor2_expanded = tensor2.expand(tensor2_expand_size).contiguous().view(tensor2_bmm_view);
+
+    // reshape batches back into result
+    //total_expansion = expand_batch_portion + (tensor1_exp_size[-2], tensor2_exp_size[-1])
+    std::vector<int64_t> total_expansion(expand_batch_portion);
+    total_expansion.push_back(tensor1_exp_size[*(tensor1_exp_size.end() - 2)]);
+    total_expansion.push_back(tensor1_exp_size[*(tensor1_exp_size.end() - 1)]);
+
+    Tensor output = tensor1_expanded.bmm(tensor2_expanded);
+    output = maybeSqueeze(output.view(total_expansion), dim_tensor1, dim_tensor2);
+    return output;
+  }
+
+  std::ostringstream oss;
+  oss << "both arguments to matmul need to be at least 1D,  but they are "
+      << dim_tensor1 << "D and " << dim_tensor2 << "D";
+  throw std::runtime_error(oss.str());
 }
 
 }
