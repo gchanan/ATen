@@ -170,37 +170,17 @@ inferUnsqueezeGeometry(const Tensor &tensor, int64_t dim) {
 /*
 [NativeFunction]
 name: squeeze
+arg: Tensor result [output]
 arg: Tensor self
 return: Tensor
-variants: method, function
+variants: function
 type_method_definition_level: base
-type_method_definition_dispatch: at::native::squeeze
+type_method_definition_dispatch: at::native::squeeze_out
 [/NativeFunction]
 */
-static inline Tensor squeeze(const Tensor & self) {
+static inline Tensor squeeze_out(Tensor &result, const Tensor & self) {
   auto g = inferSqueezeGeometry(self);
-  return self.as_strided(std::get<0>(g), std::get<1>(g));
-}
-
-/*
-[NativeFunction]
-name: squeeze
-arg: Tensor self
-arg: int64_t dim
-return: Tensor
-variants: method, function
-type_method_definition_level: base
-type_method_definition_dispatch: at::native::squeeze
-[/NativeFunction]
-*/
-static inline Tensor squeeze(const Tensor & self, int64_t dim) {
-  dim = maybe_wrap_dim(dim, self.dim());
-
-  if (self.sizes()[dim] != 1) {
-    return self.as_strided(self.sizes().vec(), self.strides().vec());
-  }
-  auto g = inferSqueezeGeometry(self, dim);
-  return self.as_strided(std::get<0>(g), std::get<1>(g));
+  return at::as_strided_out(result, self, std::get<0>(g), std::get<1>(g));
 }
 
 /*
